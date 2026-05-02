@@ -18,3 +18,11 @@ type Subscription{
   todoAdded:Todo!
 }
 
+type User{
+  id:ID!
+  username:String!
+}
+
+extend type Todo{
+  user:User!
+}

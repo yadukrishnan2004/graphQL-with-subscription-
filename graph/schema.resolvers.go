@@ -25,7 +25,7 @@ func (r *mutationResolver) CreateTodo(ctx context.Context, text string) (*model.
 	}
 
 	r.Mu.Lock()
-	for _,ch:=range r.Subscriber{
+	for _, ch := range r.Subscriber {
 		select {
 		case ch <- newTodo:
 		default:
@@ -70,26 +70,32 @@ func (r *queryResolver) Todos(ctx context.Context) ([]*model.Todo, error) {
 	return todos, nil
 }
 
-
+// TodoAdded is the resolver for the todoAdded field.
 func (r *subscriptionResolver) TodoAdded(ctx context.Context) (<-chan *model.Todo, error) {
 	id := uuid.New().String()
 	ch := make(chan *model.Todo, 1)
 
 	r.Mu.Lock()
-	if r.Subscriber==nil{
-		r.Subscriber=make(map[string]chan *model.Todo)
+	if r.Subscriber == nil {
+		r.Subscriber = make(map[string]chan *model.Todo)
 	}
-	r.Subscriber[id]=ch
+	r.Subscriber[id] = ch
 	r.Mu.Unlock()
 
-	go func(){
+	go func() {
 		<-ctx.Done()
 		r.Mu.Lock()
-		delete(r.Subscriber,id)
+		delete(r.Subscriber, id)
 		r.Mu.Unlock()
 	}()
 
 	return ch, nil
+}
+
+// User is the resolver for the user field.
+func (r *todoResolver) User(ctx context.Context, obj *model.Todo) (*model.User, error) {
+	// This doesn't hit the DB immediately; it waits to batch with others!
+	return For(ctx).UserLoader.Load(ctx, obj.UserID)
 }
 
 // Mutation returns MutationResolver implementation.
@@ -101,6 +107,10 @@ func (r *Resolver) Query() QueryResolver { return &queryResolver{r} }
 // Subscription returns SubscriptionResolver implementation.
 func (r *Resolver) Subscription() SubscriptionResolver { return &subscriptionResolver{r} }
 
+// Todo returns TodoResolver implementation.
+func (r *Resolver) Todo() TodoResolver { return &todoResolver{r} }
+
 type mutationResolver struct{ *Resolver }
 type queryResolver struct{ *Resolver }
 type subscriptionResolver struct{ *Resolver }
+type todoResolver struct{ *Resolver }
