@@ -1,0 +1,20 @@
+type Todo{
+  id:ID!
+  text:String!
+  done:Boolean!
+}
+
+type Query{
+  todos :[Todo!]!
+}
+
+type Mutation{
+  createTodo(text:String!):Todo!
+  updateTodo(id:ID!,done:Boolean!):Todo!
+  deleteTodo(id:ID!):Boolean!
+}
+
+type Subscription{
+  todoAdded:Todo!
+}
+
